@@ -1,0 +1,89 @@
+﻿@using Site.ViewModels
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<DefaultViewModel>
+@{
+	Layout = null;
+	var root = Model.CurrentPage.Root();
+	var rootTitle = root.Value<string>("title");
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Umbraco SPA</title>
+	<link rel="stylesheet" href="/css/w3.css">
+	<script type="module" src="/js/components.js"></script>
+	<script type="module" src="/js/router.js"></script>
+	<script type="module" src="/js/navigation.js"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+	<meta charset="UTF-8">
+	<meta name="og:title" content="@(Model.CurrentPage.Value<string>("title"))">
+	<meta name="description" content="@(Model.CurrentPage.Value<string>("seoDescription"))">
+	<meta name="keywords" content="@(string.Join(", ", Model.CurrentPage.Value<string[]>("seoKeywords") ?? []))">
+</head>
+<body>
+
+@* Menu (navigation structure) *@
+<nav class="w3-sidebar w3-red w3-collapse w3-top w3-large w3-padding" style="z-index:3;width:300px;font-weight:bold;" id="menu">
+	<a href="javascript:void(0)" onclick="w3_close()" class="w3-button w3-hide-large w3-xlarge w3-hover-pale-yellow">✕</a>
+	<div class="w3-bar-block">
+		<a href="/" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-pale-yellow w3-hide-medium">
+			<h3>
+				<b>@rootTitle</b>
+			</h3>
+		</a>
+		@foreach (var levelOne in root.Children)
+		{
+			var levelOneUrl = @levelOne.Url();
+			<a href="@levelOneUrl" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-pale-yellow">@(levelOne.Value<string>("title"))</a>
+
+			var levelTwos = levelOne.Children.ToArray();
+			if (levelTwos.Length <= 0)
+			{
+				continue;
+			}
+
+			<div class="w3-padding w3-small" data-parent-menu="@levelOneUrl" style="display: none">
+				@foreach (var levelTwo in levelTwos)
+				{
+					<a href="@levelTwo.Url()" onclick="w3_close()" class="w3-bar-item w3-button w3-hover-pale-yellow">@(levelTwo.Value<string>("title"))</a>
+				}
+			</div>
+		}
+	</div>
+</nav>
+
+@* Top menu on small screens *@
+<header class="w3-container w3-top w3-hide-large w3-red w3-xlarge w3-padding">
+	<a href="javascript:void(0)" class="w3-button w3-red  w3-hover-pale-yellow w3-margin-right" onclick="w3_open()">☰</a>
+	<a href="/" class="w3-button w3-hover-pale-yellow">@rootTitle</a>
+</header>
+
+@* Overlay effect when opening sidebar on small screens *@
+<div class="w3-overlay w3-hide-large" onclick="w3_close()" style="cursor:pointer" title="Close side menu" id="overlay"></div>
+
+@* Page content *@
+<div class="w3-main" style="margin-left:340px;margin-right:40px">
+	<div class="w3-container" style="margin-top:80px;">
+		@* This is where the Vaadin Router inserts pages *@
+		<div id="outlet"></div>
+	</div>
+</div>
+
+<script>
+	@* Script to open and close sidebar *@
+	function w3_open() {
+		document.getElementById("menu").style.display = "block";
+		document.getElementById("overlay").style.display = "block";
+	}
+
+	function w3_close() {
+		document.getElementById("menu").style.display = "none";
+		document.getElementById("overlay").style.display = "none";
+	}
+
+	@* First page content *@
+	document.umbCurrentPage = @Model.ApiContent;	
+</script>
+</body>
+</html>
